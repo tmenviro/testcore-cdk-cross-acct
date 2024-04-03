@@ -14,9 +14,9 @@ export class MyLambdaStack extends cdk.Stack {
   ) {
     super(scope, id, props);
 
-    const vpc = ec2.Vpc.fromLookup(this, "VPC", {
-      vpcId: "vpc-067981a7410563005",
-    });
+    // const vpc = ec2.Vpc.fromLookup(this, "VPC", {
+    //   vpcId: "vpc-067981a7410563005",
+    // });
 
     // const bucket = s3.Bucket.fromBucketName(
     //   this,
@@ -32,20 +32,20 @@ export class MyLambdaStack extends cdk.Stack {
       // code: Code.fromBucket(bucket, s3Key),
       code: Code.fromAsset(path.join(__dirname, "lambda")), //resolving to ./lambda directory
       environment: { stageName: stageName }, //inputting stagename
-      vpc: vpc,
-      // Specify subnets and security groups if necessary
-      vpcSubnets: {
-        // Adjust subnetType as necessary, e.g., PRIVATE, PUBLIC, or ISOLATED
-        subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
-      },
-      securityGroups: [
-        // Reference or create a security group
-        ec2.SecurityGroup.fromSecurityGroupId(
-          this,
-          "LambdaSG",
-          "subnet-0afe8a904cf219749"
-        ),
-      ],
+      // vpc: vpc,
+      // // Specify subnets and security groups if necessary
+      // vpcSubnets: {
+      //   // Adjust subnetType as necessary, e.g., PRIVATE, PUBLIC, or ISOLATED
+      //   subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      // },
+      // securityGroups: [
+      //   // Reference or create a security group
+      //   ec2.SecurityGroup.fromSecurityGroupId(
+      //     this,
+      //     "LambdaSG",
+      //     "subnet-0afe8a904cf219749"
+      //   ),
+      // ],
     });
   }
 }

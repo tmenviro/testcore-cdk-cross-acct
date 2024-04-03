@@ -1,0 +1,70 @@
+{
+  "vpc-provider:account=037056210623:filter.vpc-id=vpc-067981a7410563005:region=us-gov-east-1:returnAsymmetricSubnets=true": {
+    "vpcId": "vpc-067981a7410563005",
+    "vpcCidrBlock": "10.17.0.0/16",
+    "ownerAccountId": "037056210623",
+    "availabilityZones": [],
+    "subnetGroups": [
+      {
+        "name": "Private",
+        "type": "Private",
+        "subnets": [
+          {
+            "subnetId": "subnet-0b1b5e9939d11d836",
+            "cidr": "10.17.2.0/24",
+            "availabilityZone": "us-gov-east-1a",
+            "routeTableId": "rtb-03184feb08a96b55f"
+          },
+          {
+            "subnetId": "subnet-0737e688de39c6200",
+            "cidr": "10.17.4.0/24",
+            "availabilityZone": "us-gov-east-1a",
+            "routeTableId": "rtb-013e67f6a76eaaca8"
+          },
+          {
+            "subnetId": "subnet-0afe8a904cf219749",
+            "cidr": "10.17.6.0/24",
+            "availabilityZone": "us-gov-east-1a",
+            "routeTableId": "rtb-0abe2b735909f64f2"
+          },
+          {
+            "subnetId": "subnet-025fc1f69e49173d5",
+            "cidr": "10.17.7.0/24",
+            "availabilityZone": "us-gov-east-1b",
+            "routeTableId": "rtb-0dbfb874293dba95b"
+          },
+          {
+            "subnetId": "subnet-0fa3e77e38f930cd3",
+            "cidr": "10.17.3.0/24",
+            "availabilityZone": "us-gov-east-1b",
+            "routeTableId": "rtb-027145fbd1959a078"
+          },
+          {
+            "subnetId": "subnet-09062bffb2c6fd3d2",
+            "cidr": "10.17.5.0/24",
+            "availabilityZone": "us-gov-east-1b",
+            "routeTableId": "rtb-093d70105be3f9ed0"
+          }
+        ]
+      },
+      {
+        "name": "Public",
+        "type": "Public",
+        "subnets": [
+          {
+            "subnetId": "subnet-041b883d6abf3e3d1",
+            "cidr": "10.17.0.0/24",
+            "availabilityZone": "us-gov-east-1a",
+            "routeTableId": "rtb-03e35f38f8ea699be"
+          },
+          {
+            "subnetId": "subnet-0a98f937e72e9ae87",
+            "cidr": "10.17.1.0/24",
+            "availabilityZone": "us-gov-east-1b",
+            "routeTableId": "rtb-02d431466a5cc5962"
+          }
+        ]
+      }
+    ]
+  }
+}

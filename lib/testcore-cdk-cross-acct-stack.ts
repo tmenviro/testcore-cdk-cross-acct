@@ -18,7 +18,7 @@ export class TestcoreCdkCrossAcctStack extends cdk.Stack {
     const repo = Repository.fromRepositoryName(
       this,
       "Repository",
-      "comm-gov-avm"
+      "testcore-cdk-cross-acct"
     );
 
     // Define a custom IAM role with the required permissions for the CodeBuild project
@@ -40,13 +40,14 @@ export class TestcoreCdkCrossAcctStack extends cdk.Stack {
 
     const testingStage = pipeline.addStage(
       new TesCorePipelineAppStage(this, "test", {
-        env: { account: "093413643625", region: "us-gov-east-1" },
+        env: { account: "037056210623", region: "us-gov-east-1" },
       })
     );
 
     testingStage.addPre(
       new ShellStep("Run Unit Tests", { commands: ["npm install", "npm test"] })
     );
+
     //   testingStage.addPost(
     //     new ManualApprovalStep("Manual approval before production")
     //   );

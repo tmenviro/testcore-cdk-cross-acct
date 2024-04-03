@@ -31,6 +31,7 @@ export class TestcoreCdkCrossAcctStack extends cdk.Stack {
     });
 
     const pipeline = new CodePipeline(this, "Pipeline", {
+      crossAccountKeys: true,
       pipelineName: "TestPipeline",
       synth: new ShellStep("Synth", {
         input: CodePipelineSource.codeCommit(repo, "main"),

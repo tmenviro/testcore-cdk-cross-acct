@@ -49,14 +49,12 @@ export class TestcoreCdkCrossAcctStack extends cdk.Stack {
       new ShellStep("Run Unit Tests", { commands: ["npm install", "npm test"] })
     );
 
-    //   testingStage.addPost(
-    //     new ManualApprovalStep("Manual approval before production")
-    //   );
+    testingStage.addPost(new ManualApprovalStep("Manual approval before QA"));
 
-    //   const prodStage = pipeline.addStage(
-    //     new MyPipelineAppStage(this, "prod", {
-    //       env: { account: "608398894274", region: "us-east-1" },
-    //     })
-    //   );
+    const prodStage = pipeline.addStage(
+      new TesCorePipelineAppStage(this, "qa", {
+        env: { account: "037056210623", region: "us-east-1" },
+      })
+    );
   }
 }

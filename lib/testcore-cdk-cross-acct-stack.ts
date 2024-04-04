@@ -53,7 +53,7 @@ export class TestcoreCdkCrossAcctStack extends cdk.Stack {
 
     const prodStage = pipeline.addStage(
       new TesCorePipelineAppStage(this, "qa", {
-        env: { account: "037056210623", region: "us-east-1" },
+        env: { account: "037056210623", region: "us-gov-east-1" },
       })
     );
   }

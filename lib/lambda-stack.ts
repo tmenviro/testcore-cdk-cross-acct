@@ -29,7 +29,7 @@ export class MyLambdaStack extends cdk.Stack {
     new NodejsFunction(this, "LambdaFunction", {
       runtime: cdk.aws_lambda.Runtime.NODEJS_18_X,
       handler: "handler",
-      entry: path.join(__dirname, "lambda", "testLambda.js"), // path to your Lambda function's entry file
+      entry: path.join(__dirname, "lambda", "handler.ts"), // path to your Lambda function's entry file
       environment: {
         stageName: stageName,
         DATABASE_URL:

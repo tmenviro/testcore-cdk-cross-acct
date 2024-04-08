@@ -47,7 +47,7 @@ export class MyLambdaStack extends cdk.Stack {
           afterBundling(inputDir: string, outputDir: string): string[] {
             return [
               `cd ${outputDir}`,
-              `yarn prisma generate`,
+              `yarn prisma generate --schema=./prisma/schema.prisma`, // Explicitly specify schema location
               `rm -rf node_modules/@prisma/engines`,
               `rm -rf node_modules/@prisma/client/node_modules node_modules/.bin node_modules/prisma`,
             ];

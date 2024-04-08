@@ -1,7 +1,8 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { Function, InlineCode, Runtime, Code } from "aws-cdk-lib/aws-lambda";
+// import { Function, InlineCode, Runtime, Code } from "aws-cdk-lib/aws-lambda";
 import * as s3 from "aws-cdk-lib/aws-s3";
+import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import * as path from "path";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 
@@ -25,13 +26,34 @@ export class MyLambdaStack extends cdk.Stack {
     // );
     // const s3Key = "lambda.zip";
 
-    new Function(this, "LambdaFunction", {
-      runtime: Runtime.NODEJS_18_X,
-      //handler: "testLambda::testLambda.Bootstrap::ExecuteFunction",
-      handler: "testLambda.handler",
-      // code: Code.fromBucket(bucket, s3Key),
-      code: Code.fromAsset(path.join(__dirname, "lambda")), //resolving to ./lambda directory
-      environment: { stageName: stageName }, //inputting stagename
+    new NodejsFunction(this, "LambdaFunction", {
+      runtime: cdk.aws_lambda.Runtime.NODEJS_18_X,
+      handler: "handler",
+      entry: path.join(__dirname, "lambda", "testLambda.js"), // path to your Lambda function's entry file
+      environment: {
+        stageName: stageName,
+        DATABASE_URL:
+          "postgresql://postgres:y0urMasterPassword754!@database-1.c6cmqbgb5x9u.us-east-1.rds.amazonaws.com:5432/cognito?schema=public",
+      },
+      bundling: {
+        nodeModules: ["@prisma/client", "prisma"],
+        commandHooks: {
+          beforeBundling(inputDir: string, outputDir: string): string[] {
+            return [];
+          },
+          beforeInstall(inputDir: string, outputDir: string): string[] {
+            return [`cp -R ${inputDir}/prisma ${outputDir}/`];
+          },
+          afterBundling(inputDir: string, outputDir: string): string[] {
+            return [
+              `cd ${outputDir}`,
+              `yarn prisma generate`,
+              `rm -rf node_modules/@prisma/engines`,
+              `rm -rf node_modules/@prisma/client/node_modules node_modules/.bin node_modules/prisma`,
+            ];
+          },
+        },
+      },
       // vpc: vpc,
       // // Specify subnets and security groups if necessary
       // vpcSubnets: {

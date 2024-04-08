@@ -1,0 +1,936 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-1.0.x", "linux-arm64-openssl-1.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model vendor_signup {
+  id            String    @default(uuid()) @id
+  username      String
+  email         String    @unique
+  company       String
+  phone         String
+  signup_type   String
+  address       String?
+  city          String?
+  state         String?
+  zip           String?
+  country       String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  approved      Boolean   @default(false)
+  approved_at   DateTime?
+  approved_by   String? 
+}
+
+model users {
+  id                         String                       @id(map: "_copy_3") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  firstName                  String?                      @db.VarChar(30)
+  lastName                   String                       @db.VarChar(30)
+  emailAddress               String                       @unique @db.VarChar(80)
+  phone                      String?                      @db.VarChar(30)
+  username                   String?                      @db.VarChar(255)
+  password                   String?                      @db.VarChar(255)
+  salt                       String?                      @db.VarChar(255)
+  company_id                 BigInt?
+  created_at                 DateTime?                    @default(now()) @db.Date
+  deleted_at                 DateTime?                    @db.Date
+  updated_at                 DateTime?                    @updatedAt @db.Date
+  is_primary                 Boolean?                     @default(false)
+  company_contacts           company_contacts[]
+  contacts                   contacts[]
+  documents                  documents[]
+  filters                    filters[]
+  notes                      notes[]
+  project_estimates          project_estimates[]
+  project_members            project_members[]
+  tasks                      tasks[]
+  user_notification_settings user_notification_settings[]
+  user_roles                 user_roles[]
+}
+
+model companies {
+  id                BigInt             @id(map: "Copmpanies_pkey") @default(autoincrement())
+  company_name      String?            @unique(map: "company_name_unique") @db.VarChar(255)
+  billing_address   String?            @db.VarChar(255)
+  billing_address2  String?            @db.VarChar(255)
+  billing_city      String?            @db.VarChar(255)
+  billing_state     String?            @db.VarChar(255)
+  billing_zip       String?            @db.VarChar(255)
+  billing_country   String?            @db.VarChar(255)
+  company_type      String?            @db.VarChar(32)
+  shipping_address  String?            @db.VarChar(255)
+  shipping_address2 String?            @db.VarChar(255)
+  shipping_city     String?            @db.VarChar(255)
+  shipping_state    String?            @db.VarChar(255)
+  shipping_zip      String?            @db.VarChar(255)
+  shipping_country  String?            @db.VarChar(255)
+  key               String?            @db.VarChar(255)
+  email             String?            @db.VarChar(255)
+  office_phone      String?            @db.VarChar(255)
+  parent_company_id BigInt?
+  billing_county    String?            @db.VarChar(255)
+  tenant_id         String?            @db.Uuid
+  old_id            BigInt?
+  new_id            String?            @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at        DateTime?          @default(now()) @db.Date
+  deleted_at        DateTime?          @db.Date
+  updated_at        DateTime?          @updatedAt @db.Date
+  account_health    String             @default("ok") @db.VarChar(255)
+  tenants           tenants?           @relation(fields: [tenant_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_tenant")
+  company_contacts  company_contacts[]
+  locations         locations[]
+  projects          projects[]
+  tasks             tasks[]
+
+  @@index([company_name], map: "company_name_substring")
+}
+
+model tenants {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_name String      @db.VarChar(255)
+  created_at  DateTime?   @default(now()) @db.Date
+  deleted_at  DateTime?   @db.Date
+  updated_at  DateTime?   @updatedAt @db.Date
+  companies   companies[]
+}
+
+model company_contacts {
+  id             BigInt    @id @default(autoincrement())
+  contact_title  String?   @db.VarChar(255)
+  is_primary     Boolean?  @default(false)
+  contact_id     String    @db.Uuid
+  company_id     BigInt
+  created_at     DateTime? @default(now()) @db.Date
+  deleted_at     DateTime? @db.Date
+  updated_at     DateTime? @updatedAt @db.Date
+  user_id        String?   @db.Uuid
+  job_id         Int?      @db.SmallInt
+  contact_type   String?   @db.VarChar(255)
+  contact_source String?   @db.VarChar(255)
+  company        companies @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  contact        contacts  @relation(fields: [contact_id], references: [id], onDelete: Cascade)
+  jobs           jobs?     @relation(fields: [job_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_job_id")
+  users          users?    @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "fk_user_id")
+
+  @@unique([company_id, contact_id])
+}
+
+model contacts {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String?            @db.VarChar(255)
+  email            String?            @db.VarChar(255)
+  phone_number     String?            @db.VarChar(255)
+  created_at       DateTime?          @default(now()) @db.Date
+  deleted_at       DateTime?          @db.Date
+  updated_at       DateTime?          @updatedAt @db.Date
+  user_id          String?            @db.Uuid
+  job_id           Int?               @db.SmallInt
+  contact_type     String?            @db.VarChar(255)
+  contact_source   String?            @db.VarChar(255)
+  company_contacts company_contacts[]
+  jobs             jobs?              @relation(fields: [job_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_job_id")
+  users            users?             @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "fk_user_id")
+  project_contacts project_contacts[]
+}
+
+model locations {
+  id             Int        @id(map: "locations_pk") @default(autoincrement())
+  location_name  String?    @db.VarChar(255)
+  address        String?    @db.VarChar(255)
+  address2       String?    @db.VarChar(255)
+  city           String?    @db.VarChar(255)
+  state          String?    @db.VarChar(255)
+  zip            String?    @db.VarChar(255)
+  latitude       Float?     @db.Real
+  longitude      Float?     @db.Real
+  description    String?    @db.VarChar(255)
+  company_id     BigInt?
+  country        String?    @db.VarChar(255)
+  timezone       DateTime?  @db.Date
+  operator       String?    @db.VarChar(255)
+  county         String?    @db.VarChar(255)
+  old_id         Int?       @unique(map: "locationId")
+  new_id         String     @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  new_company_id String?    @db.Uuid
+  created_at     DateTime?  @default(now()) @db.Date
+  deleted_at     DateTime?  @db.Date
+  updated_at     DateTime?  @updatedAt @db.Date
+  company        companies? @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_company_id")
+  projects       projects[]
+}
+
+model projects {
+  id                         Int                          @id @default(autoincrement())
+  project_name               String                       @db.VarChar(255)
+  project_type               String?                      @db.VarChar(255)
+  estimated_start_date       DateTime?                    @db.Date
+  start_date                 DateTime?                    @db.Date
+  end_date                   DateTime?                    @db.Date
+  status                     String                       @db.VarChar(255)
+  description                String?
+  project_key                String?                      @db.VarChar(255)
+  location_id                Int?
+  subsidy_name               String?                      @db.VarChar(255)
+  project_number             String?                      @db.VarChar(255)
+  deal_maker                 String?                      @db.VarChar(50)
+  lead_generator             String?                      @db.VarChar(50)
+  contract_forecast          DateTime?                    @db.Date
+  contract_actual            DateTime?                    @db.Date
+  address                    String?                      @db.VarChar(255)
+  city                       String?                      @db.VarChar(255)
+  state                      String?                      @db.VarChar(255)
+  zip                        String?                      @db.VarChar(255)
+  property_type              String?                      @db.VarChar(255)
+  installation_scope         String?                      @db.VarChar(255)
+  site_walk_price            Float?                       @db.Real
+  deal_type                  String?                      @db.VarChar(255)
+  lead_category              String?                      @db.VarChar(255)
+  subsidy_program            String?                      @db.VarChar(255)
+  deal_status                String?                      @db.VarChar(255)
+  hardware_brand             String?                      @db.VarChar(255)
+  station_count              Int?                         @db.SmallInt
+  pedestal_count             Int?                         @db.SmallInt
+  close_probability          Int?
+  qb_install_estimate        Float?                       @db.Real
+  install_revenue            Float?                       @db.Real
+  qb_hardware_estimate       Float?                       @db.Real
+  hardware_revenue           Float?                       @db.Real
+  install_budget             Float?                       @db.Real
+  project_desc               String?
+  sales_ops_transfer         DateTime?                    @db.Timestamptz(6)
+  project_manager            String?                      @db.VarChar(255)
+  assistant_project_manager  String?                      @db.VarChar(255)
+  utility_account_number     String?                      @db.VarChar(255)
+  engineering_firm           String?                      @db.VarChar(255)
+  permit_status              String?                      @db.VarChar(255)
+  permit_number              String?                      @db.VarChar(255)
+  construction_status        String?                      @db.VarChar(255)
+  percent_complete           Int?
+  precon_walk                DateTime?                    @db.Date
+  equipment_ordered          Boolean?
+  boring_vendor              String?                      @db.VarChar(255)
+  boring_po                  String?                      @db.VarChar(255)
+  boring_completion          DateTime?                    @db.Date
+  boring_cost                Float?                       @db.Real
+  civil_vendor               String?                      @db.VarChar(255)
+  civil_po                   String?                      @db.VarChar(255)
+  civil_completion           DateTime?                    @db.Date
+  civil_cost                 Float?                       @db.Real
+  electrician_vendor         String?                      @db.VarChar(255)
+  electric_po                String?                      @db.VarChar(255)
+  electric_completion        DateTime?                    @db.Date
+  electric_cost              Float?                       @db.Real
+  painting_vendor            String?                      @db.VarChar(255)
+  painting_po                String?                      @db.VarChar(255)
+  painting_completion        DateTime?                    @db.Date
+  painting_cost              Float?                       @db.Real
+  fencing_vendor             String?                      @db.VarChar(255)
+  fencing_po                 String?                      @db.VarChar(255)
+  fencing_cost               Float?                       @db.Real
+  fencing_completion         DateTime?                    @db.Date
+  landscaping_vendor         String?                      @db.VarChar(255)
+  landscaping_po             String?                      @db.VarChar(255)
+  landscaping_cost           String?                      @db.VarChar(255)
+  landscaping_completion     DateTime?                    @db.Date
+  change_order               Float?                       @db.Real
+  change_order_desc          String?
+  deposit_invoice_submitted  Boolean?
+  deposit_received_date      DateTime?                    @db.Date
+  final_invoice_submitted    Boolean?
+  final_invoice_sent         DateTime?                    @db.Date
+  latitude                   Float?                       @db.Real
+  longitude                  Float?                       @db.Real
+  completion_date            DateTime?                    @db.Date
+  sales_cycle                Int?
+  ops_cycle                  Int?
+  total_cycle                Int?
+  pricing_contract           String?                      @db.VarChar(255)
+  network_type               String?                      @db.VarChar(255)
+  charging_rate_hr           String?                      @db.VarChar(255)
+  maintenance_plan           String?                      @db.VarChar(255)
+  location_newid             String?                      @db.Uuid
+  new_id                     String?                      @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lead_id                    String?                      @db.VarChar(255)
+  pedestal_brand             String?                      @db.VarChar(255)
+  bollards_count             Int?                         @db.SmallInt
+  satec_ordered              DateTime?                    @db.Date
+  po_number                  String?                      @db.VarChar(255)
+  po_amount                  Float?                       @db.Real
+  vendor_company_id          BigInt?
+  company_id                 BigInt?
+  lead_data                  Json?
+  lead_source                String?                      @db.VarChar(255)
+  lead_csv_url               String?                      @db.VarChar(1000)
+  created_at                 DateTime?                    @default(now()) @db.Date
+  deleted_at                 DateTime?                    @db.Date
+  updated_at                 DateTime?                    @updatedAt @db.Date
+  job_id                     Int?                         @db.SmallInt
+  caas                       Boolean?                     @default(false)
+  deal_partner               String?                      @db.VarChar(255)
+  invoice_method             Json?                        @db.Json
+  dead_deal_reason           String?                      @db.VarChar(255)
+  dead_deal_comment          String?
+  marketing_source           String?
+  marketing_notification     Boolean?                     @default(false)
+  customer_invoice_email     String?                      @db.VarChar(255)
+  subsidy_invoice_email      String?                      @db.VarChar(255)
+  project_template_id        Int?                         @db.SmallInt
+  deal_temp                  String?                      @db.VarChar(255)
+  title                      String?                      @db.VarChar(255)
+  accounting_task_triggers   accounting_task_triggers[]
+  daily_report_headers       daily_report_headers[]
+  daily_reports              daily_reports[]
+  notes                      notes[]
+  notifications              notifications[]
+  project_contacts           project_contacts[]
+  project_estimates          project_estimates[]
+  project_members            project_members[]
+  project_tags               project_tags[]
+  location                   locations?                   @relation(fields: [location_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_location_id")
+  company                    companies?                   @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "fk_company_id")
+  tasks                      tasks[]
+  jobs                       jobs?                        @relation(fields: [job_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_job_id")
+  documents                  documents[]
+  user_notification_settings user_notification_settings[]
+  project_history            project_history[]
+  project_engineering        project_engineering[]
+}
+
+model tasks {
+  id                         Int                          @id @default(autoincrement())
+  task_json                  Json?                        @db.Json
+  name                       String                       @db.VarChar(255)
+  start_date                 DateTime?                    @default(now()) @db.Date
+  end_date                   DateTime?                    @default(now()) @db.Date
+  project_id                 Int
+  task_key                   String?                      @db.VarChar(255)
+  status                     String?                      @default("To Do") @db.VarChar(255)
+  due_date                   DateTime?                    @db.Date
+  task_type                  String?                      @db.VarChar(255)
+  estimated_start_date       DateTime?                    @db.Date
+  estimated_end_date         DateTime?                    @db.Date
+  external_view              Boolean?                     @default(false)
+  project_key                String?                      @db.VarChar(255)
+  new_project_id             String?                      @db.Uuid
+  service_type               Int?                         @db.SmallInt
+  days_from_start            Int?                         @db.SmallInt
+  estimated_days             Int?                         @db.SmallInt
+  vendor_company_id          BigInt?
+  percent_complete           Int?                         @default(0) @db.SmallInt
+  scheduled_date             DateTime?                    @db.Timestamptz(6)
+  po_number                  String?                      @db.VarChar(255)
+  po_amount                  Float?                       @db.Real
+  tenant_id                  String?                      @db.Uuid
+  assignee                   String?                      @db.Uuid
+  created_at                 DateTime?                    @default(now()) @db.Date
+  deleted_at                 DateTime?                    @db.Date
+  updated_at                 DateTime?                    @updatedAt @db.Date
+  task_template_tasks_id     Int?
+  generated_task_assignee    String?                      @db.Uuid
+  dependent_on_task_id       Int?
+  is_critical_path           Boolean                      @default(false)
+  successor_id               Int?
+  dependency_type            String?                      @db.VarChar(10)
+  successor_list             String[]                     @default([])
+  snooze_date                DateTime?                    @db.Date
+  review_status              String?                      @db.VarChar(255)
+  documents                  documents[]
+  notes                      notes[]
+  notifications              notifications[]
+  project_estimates          project_estimates[]
+  task_history               task_history[]
+  users                      users?                       @relation(fields: [generated_task_assignee], references: [id], map: "fk_generated_task_assignee")
+  task_template_tasks        task_template_tasks?         @relation(fields: [task_template_tasks_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "task_template_tasks_id_fk")
+  project                    projects                     @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  vendor                     companies?                   @relation(fields: [vendor_company_id], references: [id])
+  user_notification_settings user_notification_settings[]
+}
+
+model jobs {
+  id               Int                @id @default(autoincrement())
+  num_success      Int?               @default(0)
+  num_failure      Int?               @default(0)
+  total            Int                @default(0)
+  job_type         String?            @db.VarChar(50)
+  status           String             @default("complete") @db.VarChar(100)
+  created_at       DateTime?          @default(now()) @db.Date
+  deleted_at       DateTime?          @db.Date
+  updated_at       DateTime?          @updatedAt @db.Date
+  name             String?            @db.VarChar(255)
+  file_url         String?            @db.VarChar(255)
+  initiator        String?            @db.VarChar(255)
+  file_name        String?            @db.VarChar(255)
+  company_contacts company_contacts[]
+  contacts         contacts[]
+  projects         projects[]
+  errors_json      job_errors_json[]
+}
+
+model project_contacts {
+  id                      BigInt    @id @default(autoincrement())
+  contact_title           String?   @db.VarChar(255)
+  is_primary              Boolean?  @default(false)
+  project_id              Int
+  contact_id              String    @db.Uuid
+  created_at              DateTime? @default(now()) @db.Date
+  deleted_at              DateTime? @db.Date
+  updated_at              DateTime? @updatedAt @db.Date
+  milestone_notifications Boolean   @default(false)
+  status_notifications    Boolean   @default(false)
+  contact                 contacts  @relation(fields: [contact_id], references: [id], onDelete: Cascade)
+  project                 projects  @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@unique([project_id, contact_id])
+}
+
+model accounting_task_triggers {
+  id                  Int      @id @default(autoincrement())
+  project_id          Int
+  task_name           String?  @db.VarChar(255)
+  percent_complete    Int?     @db.SmallInt
+  recipient_type      String?  @db.VarChar(255)
+  recipient_id        Int?
+  accounting_function String?  @db.VarChar(255)
+  po_number           String?  @db.VarChar(255)
+  po_amount           Float?   @db.Real
+  payment_terms       String?  @db.VarChar(255)
+  invoice_type        String?  @db.VarChar(255)
+  projects            projects @relation(fields: [project_id], references: [id], onDelete: Cascade, map: "accounting_task_triggers_project_od_fkey")
+}
+
+model daily_report_headers {
+  date_of_work               DateTime?            @db.Date
+  site_id                    String?              @db.VarChar(80)
+  contractor                 String?              @db.VarChar(255)
+  personnel_onsite           String?              @db.VarChar(255)
+  personnel_onsite_name      String?              @db.VarChar(255)
+  personnel_onsite_signature String?              @db.VarChar(255)
+  personnel_onsite_untitled  String?              @db.VarChar(255)
+  personnel_onsite_other     String?              @db.VarChar(255)
+  upload_photos              String?
+  notes                      String?
+  created_by                 String?              @db.VarChar(255)
+  entry_id                   Int
+  entry_date                 DateTime?            @db.Date
+  source_url                 String?              @db.VarChar(255)
+  transaction_id             String?              @db.VarChar(255)
+  payment_amount             String?              @db.VarChar(255)
+  payment_date               String?              @db.VarChar(255)
+  payment_status             String?              @db.VarChar(255)
+  post_id                    String?              @db.VarChar(255)
+  user_agent                 String?              @db.VarChar(255)
+  user_ip                    String?              @db.VarChar(255)
+  parent_entry_id            String?              @db.VarChar(255)
+  parent_entry_form_id       String?              @db.VarChar(255)
+  child_form_field_id        String?              @db.VarChar(255)
+  pdf                        String?              @db.VarChar(255)
+  project_id                 Int?
+  project_key                String?              @db.VarChar(255)
+  daily_report_id            Int                  @id(map: "daily_reports_copy1_pkey1") @default(autoincrement())
+  created_at                 DateTime?            @default(now()) @db.Date
+  deleted_at                 DateTime?            @db.Date
+  updated_at                 DateTime?            @updatedAt @db.Date
+  projects                   projects?            @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "daily_reports_copy1_project_id_fkey1")
+  daily_report_items         daily_report_items[]
+}
+
+model daily_reports {
+  date                                              DateTime? @db.Date
+  site_id                                           String?   @db.VarChar(80)
+  contractor                                        String?   @db.VarChar(255)
+  personnel_onsite                                  String?   @db.VarChar(255)
+  personnel_onsite_name                             String?   @db.VarChar(255)
+  personnel_onsite_signature                        String?   @db.VarChar(255)
+  personnel_onsite_untitled                         String?   @db.VarChar(255)
+  personnel_onsite_other                            String?   @db.VarChar(255)
+  ws_project_permits_call_for_locate                String?   @db.VarChar(255)
+  ws_pre_con_meeting                                String?   @map("ws_pre-con_meeting") @db.VarChar(255)
+  ws_site_layout                                    String?   @db.VarChar(255)
+  ws_mobilization                                   String?   @db.VarChar(255)
+  ws_clear_and_grub_site                            String?   @db.VarChar(255)
+  ws_saw_cut_and_remove_asphalt_concretecurbs       String?   @db.VarChar(255)
+  ws_trenching_and_excavation                       String?   @db.VarChar(255)
+  ws_place_all_conduitsstub_up_to_measured_location String?   @db.VarChar(255)
+  ws_all_underground_inspections                    String?   @db.VarChar(255)
+  ws_form_rebar_and_concrete                        String?   @db.VarChar(255)
+  ws_set_switchgear                                 String?   @db.VarChar(255)
+  ws_setmount_chargers                              String?   @db.VarChar(255)
+  ws_pull_in_conductors                             String?   @db.VarChar(255)
+  ws_electrical_final_inspection                    String?   @db.VarChar(255)
+  ws_patch_resurface_asphalt_and_stripe             String?   @db.VarChar(255)
+  ws_transformer_installation                       String?   @db.VarChar(255)
+  ws_meter_set_transformer_energized                String?   @db.VarChar(255)
+  ws_install_posts_and_signs                        String?   @db.VarChar(255)
+  ws_site_cleanup                                   String?   @db.VarChar(255)
+  ws_commissioning                                  String?   @db.VarChar(255)
+  ws_final_inspection_closeout                      String?   @db.VarChar(255)
+  ws_no_work_performed                              String?   @db.VarChar(255)
+  work_scheduled_for_the_shift                      String?
+  wa_project_permits_call_for_locate                String?   @db.VarChar(255)
+  wa_pre_con_meeting                                String?   @map("wa_pre-con_meeting") @db.VarChar(255)
+  wa_site_layout                                    String?   @db.VarChar(255)
+  wa_mobilization                                   String?   @db.VarChar(255)
+  wa_clear_and_grub_site                            String?   @db.VarChar(255)
+  wa_saw_cut_and_remove_asphalt_concretecurbs       String?   @db.VarChar(255)
+  wa_trenching_and_excavation                       String?   @db.VarChar(255)
+  wa_place_all_conduitsstub_up_to_measured_location String?   @db.VarChar(255)
+  wa_all_underground_inspections                    String?   @db.VarChar(255)
+  wa_form_rebar_and_concrete                        String?   @db.VarChar(255)
+  wa_set_switchgear                                 String?   @db.VarChar(255)
+  wa_setmount_chargers                              String?   @db.VarChar(255)
+  wa_pull_in_conductors                             String?   @db.VarChar(255)
+  wa_electrical_final_inspection                    String?   @db.VarChar(255)
+  wa_patch_resurface_asphalt_and_stripe             String?   @db.VarChar(255)
+  wa_transformer_installation                       String?   @db.VarChar(255)
+  wa_meter_set_transformer_energized                String?   @db.VarChar(255)
+  wa_install_posts_and_signs                        String?   @db.VarChar(255)
+  wa_site_cleanup                                   String?   @db.VarChar(255)
+  wa_commissioning                                  String?   @db.VarChar(255)
+  wa_final_inspection_closeout                      String?   @db.VarChar(255)
+  wa_no_work_performed                              String?   @db.VarChar(255)
+  work_accomplished                                 String?
+  wn_project_permits_call_for_locate                String?   @db.VarChar(255)
+  wn_pre_con_meeting                                String?   @map("wn_pre-con_meeting") @db.VarChar(255)
+  wn_site_layout                                    String?   @db.VarChar(255)
+  wn_mobilization                                   String?   @db.VarChar(255)
+  wn_clear_and_grub_site                            String?   @db.VarChar(255)
+  wn_saw_cut_and_remove_asphalt_concretecurbs       String?   @db.VarChar(255)
+  wn_trenching_and_excavation                       String?   @db.VarChar(255)
+  wn_place_all_conduitsstub_up_to_measured_location String?   @db.VarChar(255)
+  wn_all_underground_inspections                    String?   @db.VarChar(255)
+  wn_form_rebar_and_concrete                        String?   @db.VarChar(255)
+  wn_set_switchgear                                 String?   @db.VarChar(255)
+  wn_setmount_chargers                              String?   @db.VarChar(255)
+  wn_pull_in_conductors                             String?   @db.VarChar(255)
+  wn_electrical_final_inspection                    String?   @db.VarChar(255)
+  wn_patch_resurface_asphalt_and_stripe             String?   @db.VarChar(255)
+  wn_transformer_installation                       String?   @db.VarChar(255)
+  wn_meter_set_transformer_energized                String?   @db.VarChar(255)
+  wn_install_posts_and_signs                        String?   @db.VarChar(255)
+  wn_site_cleanup                                   String?   @db.VarChar(255)
+  wn_commissioning                                  String?   @db.VarChar(255)
+  wn_final_inspection_closeout                      String?   @db.VarChar(255)
+  work_scheduled_for_next_shift                     String?
+  upload_photos                                     String?
+  notes                                             String?
+  created_by                                        String?   @db.VarChar(255)
+  entry_id                                          Int       @id @unique(map: "entry_id")
+  entry_date                                        DateTime? @db.Date
+  source_url                                        String?   @db.VarChar(255)
+  transaction_id                                    String?   @db.VarChar(255)
+  payment_amount                                    String?   @db.VarChar(255)
+  payment_date                                      String?   @db.VarChar(255)
+  payment_status                                    String?   @db.VarChar(255)
+  post_id                                           String?   @db.VarChar(255)
+  user_agent                                        String?   @db.VarChar(255)
+  user_ip                                           String?   @db.VarChar(255)
+  parent_entry_id                                   String?   @db.VarChar(255)
+  parent_entry_form_id                              String?   @db.VarChar(255)
+  child_form_field_id                               String?   @db.VarChar(255)
+  pdf                                               String?   @db.VarChar(255)
+  project_id                                        Int?
+  project_key                                       String?   @db.VarChar(255)
+  created_at                                        DateTime? @default(now()) @db.Date
+  deleted_at                                        DateTime? @db.Date
+  updated_at                                        DateTime? @updatedAt @db.Date
+  projects                                          projects? @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_project_id")
+}
+
+model notes {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at DateTime  @default(now()) @db.Timestamp(0)
+  updated_at DateTime? @updatedAt @db.Timestamp(0)
+  user_id    String?   @db.Uuid
+  note_type  String    @db.VarChar(255)
+  project_id Int
+  task_id    Int?
+  note       String?
+  deleted_at DateTime? @db.Timestamp(0)
+  projects   projects  @relation(fields: [project_id], references: [id], onDelete: Cascade, map: "fk_project_id")
+  tasks      tasks?    @relation(fields: [task_id], references: [id], map: "fk_task_id")
+  users      users?    @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "fk_user_id")
+}
+
+model notifications {
+  id             Int       @id @default(autoincrement())
+  sender_id      String    @db.Uuid
+  recipient_id   String    @db.Uuid
+  project_id     Int
+  task_id        Int?
+  has_read       Boolean   @default(false)
+  message        String
+  type           String?
+  scheduled_date DateTime? @db.Date
+  created_at     DateTime  @default(now()) @db.Timestamptz(6)
+  deleted_at     DateTime? @db.Timestamptz(6)
+  updated_at     DateTime? @updatedAt @db.Timestamptz(6)
+  projects       projects  @relation(fields: [project_id], references: [id], onDelete: Cascade, map: "fk_project_id")
+  tasks          tasks?    @relation(fields: [task_id], references: [id], map: "fk_task_id")
+}
+
+model project_estimates {
+  id                             Int       @id(map: "project_estimate_pkey") @default(autoincrement())
+  estimate_name                  String    @db.VarChar(255)
+  user_id                        String    @db.Uuid
+  project_id                     Int
+  task_id                        Int?
+  deal_status                    String?   @db.VarChar(255)
+  construction_status            String?   @db.VarChar(255)
+  install_revenue                Float?    @db.Real
+  hardware_revenue               Float?    @db.Real
+  maintenance_revenue            Float?    @db.Real
+  maintenance_discount_percentage Int?
+  software_revenue               Float?    @db.Real
+  install_budget                 Float?    @db.Real
+  qb_install_estimate            Float?    @db.Real
+  qb_hardware_estimate           Float?    @db.Real
+  estimate_note                  String?
+  created_at                     DateTime  @default(now()) @db.Date
+  updated_at                     DateTime? @db.Date
+  deleted_at                     DateTime? @db.Date
+  pricing_sheet                  String?
+  cost_per_plug                  Float?    @db.Real
+  total_labor_budget             Float?    @db.Real
+  total_equipment_budget         Float?    @db.Real
+  total_misc_budget              Float?    @db.Real
+  total_house_budget             Float?    @db.Real
+  is_editable                    Boolean?  @default(true)
+  projects                       projects  @relation(fields: [project_id], references: [id], map: "fk_project_estimates_project_id")
+  tasks                          tasks?    @relation(fields: [task_id], references: [id], onDelete: Restrict, map: "fk_project_estimates_task_id")
+  users                          users     @relation(fields: [user_id], references: [id], map: "fk_project_estimates_user_id")
+}
+
+model documents {
+  id                    Int       @id @default(autoincrement())
+  task_id               Int?
+  url                   String    @db.VarChar(255)
+  created_at            DateTime  @default(now()) @db.Date
+  updated_at            DateTime? @db.Date
+  deleted_at            DateTime? @db.Date
+  name                  String    @db.VarChar(255)
+  document_category     String?   @db.VarChar(255)
+  project_id            Int?
+  user_id               String?   @db.Uuid
+  document_sub_category String?   @db.VarChar(255)
+  external_view         String?   @default("internal") @db.VarChar(255)
+  projects              projects? @relation(fields: [project_id], references: [id], onDelete: Cascade, map: "fk_project_id_documents")
+  tasks                 tasks?    @relation(fields: [task_id], references: [id], map: "fk_task_id")
+  users                 users?    @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "fk_user_id")
+}
+
+model project_members {
+  id                      Int                  @id @default(autoincrement())
+  project_role_options_id Int
+  project_id              Int
+  created_at              DateTime             @default(now()) @db.Date
+  updated_at              DateTime?            @updatedAt @db.Date
+  deleted_at              DateTime?            @db.Date
+  user_id                 String               @db.Uuid
+  project                 projects             @relation(fields: [project_id], references: [id], onDelete: Cascade, map: "fk_project_id")
+  project_role_options    project_role_options @relation(fields: [project_role_options_id], references: [id], map: "fk_project_role_options_id")
+  user                    users                @relation(fields: [user_id], references: [id], map: "fk_user_id")
+}
+
+model task_history {
+  id                   Int       @id(map: "taskHistory_pkey") @default(autoincrement())
+  task_id              Int?
+  status               String?   @db.VarChar(255)
+  status_date          DateTime? @db.Timestamptz(6)
+  start_date           DateTime? @db.Date
+  end_date             DateTime? @db.Date
+  task_json            String?
+  task_key             String?   @db.VarChar(255)
+  task_name            String?   @db.VarChar(255)
+  project_key          String?   @db.VarChar(255)
+  modified_by          String?   @db.VarChar(255)
+  project_id           Int?
+  due_date             DateTime? @db.Date
+  task_type            String?   @db.VarChar(255)
+  estimated_start_date DateTime? @db.Date
+  estimated_end_date   DateTime? @db.Date
+  external_view        Boolean?  @default(false)
+  new_project_id       String?   @db.Uuid
+  service_type         Int?      @db.SmallInt
+  days_from_start      Int?      @db.SmallInt
+  estimated_days       Int?      @db.SmallInt
+  vendor_company_id    BigInt?
+  percent_complete     Int?      @default(0) @db.SmallInt
+  scheduled_date       DateTime? @db.Date
+  po_number            String?   @db.VarChar(255)
+  po_amount            Float?    @db.Real
+  tenant_id            String?   @db.Uuid
+  created_at           DateTime? @default(now()) @db.Date
+  deleted_at           DateTime? @db.Date
+  updated_at           DateTime? @db.Date
+  prev_task            Json?
+  changes_made         String?   @db.VarChar(255)
+  tasks                tasks?    @relation(fields: [task_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_task_id")
+}
+
+model project_tags {
+  id              Int       @id @default(autoincrement())
+  tag_id          Int
+  applier_user_id String    @db.Uuid
+  project_id      Int
+  created_at      DateTime? @default(now()) @db.Date
+  deleted_at      DateTime? @db.Date
+  updated_at      DateTime? @db.Date
+  projects        projects  @relation(fields: [project_id], references: [id], onDelete: Cascade, map: "fk_project_id")
+  tags            tags      @relation(fields: [tag_id], references: [id], map: "fk_tag_id")
+}
+
+model task_template_tasks {
+  id               Int             @id(map: "project_task_template_lkp_pkey") @default(autoincrement())
+  template_id      Int?
+  abstract_task_id Int?
+  deal_type        Int?
+  created_at       DateTime?       @default(now()) @db.Date
+  deleted_at       DateTime?       @db.Date
+  updated_at       DateTime?       @updatedAt @db.Date
+  initial_status   String?         @default("Pending") @db.VarChar(255)
+  active           Boolean?        @default(true)
+  abstract_tasks   abstract_tasks? @relation(fields: [abstract_task_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "abstract_tasks_id_fk")
+  tasks            tasks[]
+
+  @@index([abstract_task_id], map: "fki_abstract_tasks_id_fk")
+}
+
+model user_notification_settings {
+  id            Int       @id @default(autoincrement())
+  user_id       String    @db.Uuid
+  type          String
+  task_id       Int?
+  project_id    Int?
+  enabled       Boolean?  @default(true)
+  email_enabled Boolean?  @default(true)
+  created_at    DateTime  @default(now()) @db.Timestamptz(6)
+  deleted_at    DateTime? @db.Timestamptz(6)
+  updated_at    DateTime? @updatedAt @db.Timestamptz(6)
+  user          users     @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "fk_user_id")
+  projects      projects? @relation(fields: [project_id], references: [id], onDelete: Cascade, map: "fk_project_id")
+  task          tasks?    @relation(fields: [task_id], references: [id], map: "fk_task_id")
+}
+
+model project_history {
+  id                          Int       @id(map: "task_history_copy1_pkey") @default(autoincrement())
+  project_id                  Int
+  current_deal_status         String?   @db.VarChar(255)
+  change_date                 DateTime? @db.Date
+  prev_deal_status            String?   @db.VarChar(255)
+  project_key                 String?   @db.VarChar(255)
+  tenant_id                   String?   @db.Uuid
+  modified_by                 String?   @db.VarChar(255)
+  created_at                  DateTime? @default(now()) @db.Date
+  deleted_at                  DateTime? @db.Date
+  updated_at                  DateTime? @updatedAt @db.Date
+  current_construction_status String?   @db.VarChar(255)
+  prev_construction_status    String?   @db.VarChar(255)
+  current_json                Json?
+  prev_json                   Json?
+  record_type                 String?   @db.VarChar(255)
+  project                     projects  @relation(fields: [project_id], references: [id], onDelete: Cascade)
+}
+
+model project_engineering {
+  id                        Int       @id(map: "project_engineering_pkey") @default(autoincrement())
+  project_id                Int
+  building_num              Int?
+  parcel_num                Int?
+  access_code               Int?
+  access_info               String?
+  service_type              String?   @db.VarChar(100)
+  utility_provider          String?
+  utility_account_num       String?
+  fein_num                  Int?
+  install_location          String?
+  install_area_num          Int?
+  install_area_loc_num      Int?
+  install_loc_info          String?
+  transformer_id            String?
+  transformer_size          String?
+  transformer_phase         String?
+  disconnect                Boolean   @default(false)
+  disconnect_info           String?
+  step_down_transformer     Boolean   @default(false)
+  step_down_info            String?
+  new_panel_info            String?
+  new_panel_breaker_rating  String?
+  capacity_confirmed        Boolean   @default(false)
+  mdp_name                  String?   @db.VarChar(255)
+  mdp_size                  String?   @db.VarChar(255)
+  mdp_breaker_rating        String?   @db.VarChar(255)
+  setting_new_panel         Boolean   @default(false)
+  new_step_down_transformer Boolean   @default(false)
+  new_step_down_trans_info  String?
+  new_disconnect            Boolean   @default(false)
+  new_disconnect_info       String?
+  charger_count             Int?
+  pedestal_count            Int?
+  wall_mounted              Boolean   @default(false)
+  cable_management          Int?
+  cable_holsters            Int?
+  protection                String?
+  as_built_drawings         Boolean   @default(false)
+  create_date               DateTime? @default(now()) @db.Date
+  update_date               DateTime? @db.Date
+  delete_date               DateTime? @db.Date
+  projects                  projects  @relation(fields: [project_id], references: [id], map: "fk_project_engineering_project_id")
+}
+
+model job_errors_json {
+  id         Int       @id @default(autoincrement())
+  job_id     Int
+  error      Json?
+  created_at DateTime? @default(now()) @db.Date
+  job        jobs      @relation(fields: [job_id], references: [id])
+}
+
+model daily_report_items {
+  id                   Int                   @id @default(autoincrement())
+  item_name            String?               @db.VarChar(255)
+  item_type            String?               @db.VarChar(255)
+  item_status          String?               @db.VarChar(255)
+  item_value           String?
+  daily_report_id      Int?
+  project_id           BigInt?
+  project_key          String?               @db.VarChar(255)
+  date                 DateTime?             @db.Date
+  created_at           DateTime?             @default(now()) @db.Date
+  deleted_at           DateTime?             @db.Date
+  updated_at           DateTime?             @updatedAt @db.Date
+  daily_report_headers daily_report_headers? @relation(fields: [daily_report_id], references: [daily_report_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_daily_report_id")
+}
+
+model filters {
+  id           Int       @id @default(autoincrement())
+  filter_name  String
+  filter_type  String    @default("project")
+  query_params Json
+  user_id      String?   @db.Uuid
+  is_public    Boolean   @default(false)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+  deleted_at   DateTime? @db.Timestamptz(6)
+  updated_at   DateTime? @updatedAt @db.Timestamptz(6)
+  users        users?    @relation(fields: [user_id], references: [id], map: "fk_user_id")
+}
+
+model user_roles {
+  id                   Int               @id(map: "user_role_pkey") @default(autoincrement())
+  user_id              String            @db.Uuid
+  user_role_options_id Int
+  created_at           DateTime          @default(now()) @db.Date
+  updated_at           DateTime?         @db.Date
+  deleted_at           DateTime?         @db.Date
+  user_role_options    user_role_options @relation(fields: [user_role_options_id], references: [id], onDelete: Cascade, map: "fk_user_role_options_id")
+  users                users             @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "fk_user_role_user_id")
+}
+
+model project_role_options {
+  id               Int               @unique @default(autoincrement()) @db.SmallInt
+  value            String            @id @db.VarChar(255)
+  created_at       DateTime          @default(now()) @db.Date
+  updated_at       DateTime?         @updatedAt @db.Date
+  deleted_at       DateTime?         @db.Date
+  order            Int               @default(autoincrement()) @db.SmallInt
+  commission_split Int?              @db.SmallInt
+  member_category  String            @default("Sales") @db.VarChar(50)
+  project_member   project_members[]
+}
+
+model tags {
+  id                 Int            @id @default(autoincrement())
+  original_author_id String         @db.Uuid
+  is_public          Boolean        @default(false)
+  text               String
+  created_at         DateTime?      @default(now()) @db.Date
+  deleted_at         DateTime?      @db.Date
+  updated_at         DateTime?      @db.Date
+  project_tags       project_tags[]
+}
+
+model user_role_options {
+  id               Int          @id(map: "user_roles_pkey") @default(autoincrement()) @db.SmallInt
+  user_role        String?      @db.VarChar(255)
+  role_description String?      @db.VarChar(255)
+  order            Int          @default(autoincrement()) @db.SmallInt
+  created_at       DateTime?    @default(now()) @db.Date
+  deleted_at       DateTime?    @db.Date
+  updated_at       DateTime?    @db.Date
+  user_roles       user_roles[]
+}
+
+model abstract_tasks {
+  id                  Int                   @id(map: "project_task_template_tasks_pkey") @default(autoincrement())
+  task_name           String?               @db.VarChar(255)
+  client_visible      Boolean?
+  days_from_start     Int?                  @db.SmallInt
+  estimated_days      Int?                  @db.SmallInt
+  task_description    String?               @db.VarChar(255)
+  task_type           String?               @db.VarChar(255)
+  created_at          DateTime?             @default(now()) @db.Date
+  deleted_at          DateTime?             @db.Date
+  updated_at          DateTime?             @updatedAt @db.Date
+  doc_required        Boolean?              @default(false)
+  editable            Boolean?              @default(true)
+  is_critical_path    Boolean               @default(false)
+  successor_list      String[]
+  dependency_type     String?               @db.VarChar(10)
+  task_type_options   task_type_options?    @relation(fields: [task_type], references: [value], onDelete: NoAction, map: "fk_task_type")
+  requirements        requirements[]
+  task_template_tasks task_template_tasks[]
+}
+
+model task_type_options {
+  id             Int              @default(autoincrement())
+  value          String           @id(map: "task_types_pkey") @db.VarChar(255)
+  order          Int              @default(autoincrement()) @db.SmallInt
+  created_at     DateTime?        @default(now()) @db.Date
+  deleted_at     DateTime?        @db.Date
+  updated_at     DateTime?        @db.Date
+  abstract_tasks abstract_tasks[]
+}
+
+model requirements {
+  id                          Int                          @id(map: "requirement_pkey") @default(autoincrement())
+  type                        String                       @db.VarChar(255)
+  abstract_task_id            Int?
+  construction_status         String?                      @db.VarChar(255)
+  deal_status                 String?                      @db.VarChar(255)
+  field_name                  String?                      @db.VarChar(255)
+  document_category           String?                      @db.VarChar(255)
+  dependencies                Json?
+  created_at                  DateTime                     @default(now()) @db.Date
+  updated_at                  DateTime?                    @db.Date
+  deleted_at                  DateTime?                    @db.Date
+  abstract_tasks              abstract_tasks?              @relation(fields: [abstract_task_id], references: [id], onDelete: Cascade, map: "fk_requirements_abstract_task_id")
+  construction_status_options construction_status_options? @relation(fields: [construction_status], references: [value], onDelete: Cascade, map: "fk_requirements_construction_status_id")
+  deal_status_options         deal_status_options?         @relation(fields: [deal_status], references: [value], onDelete: Cascade, map: "fk_requirements_deal_status_id")
+}
+
+model construction_status_options {
+  id           Int            @db.SmallInt
+  value        String         @id(map: "construction_status_pkey") @db.VarChar(255)
+  order        Int            @default(autoincrement()) @db.SmallInt
+  created_at   DateTime?      @default(now()) @db.Date
+  deleted_at   DateTime?      @db.Date
+  updated_at   DateTime?      @db.Date
+  requirements requirements[]
+}
+
+model deal_status_options {
+  id           Int            @default(autoincrement()) @db.SmallInt
+  value        String         @id @db.VarChar(255)
+  order        Int            @default(autoincrement()) @db.SmallInt
+  created_at   DateTime?      @default(now()) @db.Date
+  deleted_at   DateTime?      @db.Date
+  updated_at   DateTime?      @db.Date
+  requirements requirements[]
+}

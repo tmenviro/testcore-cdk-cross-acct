@@ -63,20 +63,20 @@ export class MyLambdaStack extends cdk.Stack {
           },
         },
       },
-      vpc: vpc,
-      // Specify subnets and security groups if necessary
-      vpcSubnets: {
-        // Adjust subnetType as necessary, e.g., PRIVATE, PUBLIC, or ISOLATED
-        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      securityGroups: [
-        // Reference or create a security group
-        ec2.SecurityGroup.fromSecurityGroupId(
-          this,
-          "LambdaSG",
-          "sg-0123456789abcdef0"
-        ),
-      ],
+      // vpc: vpc,
+      // // Specify subnets and security groups if necessary
+      // vpcSubnets: {
+      //   // Adjust subnetType as necessary, e.g., PRIVATE, PUBLIC, or ISOLATED
+      //   subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      // },
+      // securityGroups: [
+      //   // Reference or create a security group
+      //   ec2.SecurityGroup.fromSecurityGroupId(
+      //     this,
+      //     "LambdaSG",
+      //     "sg-0123456789abcdef0"
+      //   ),
+      // ],
     });
 
     // Grant the Lambda function permissions to read from the S3 bucket

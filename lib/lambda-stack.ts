@@ -1,11 +1,11 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
-// import { Function, InlineCode, Runtime, Code } from "aws-cdk-lib/aws-lambda";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as kms from "aws-cdk-lib/aws-kms";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import * as path from "path";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
+import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
 
 export class MyLambdaStack extends cdk.Stack {
   constructor(
@@ -19,13 +19,6 @@ export class MyLambdaStack extends cdk.Stack {
     const vpc = ec2.Vpc.fromLookup(this, "VPC", {
       vpcId: "vpc-067981a7410563005",
     });
-
-    // const bucket = s3.Bucket.fromBucketName(
-    //   this,
-    //   "ArtifactBucket",
-    //   "linuxdna-dev-infra"
-    // );
-    // const s3Key = "lambda.zip";
 
     // Create a KMS key
     const kmsKey = new kms.Key(this, "MyKey", {
@@ -49,6 +42,7 @@ export class MyLambdaStack extends cdk.Stack {
         stageName: stageName,
         DATABASE_URL:
           "postgresql://postgres:y0urMasterPassword754!@database-1.c6cmqbgb5x9u.us-east-1.rds.amazonaws.com:5432/cognito?schema=public",
+        BUCKET_NAME: bucket.bucketName, // Pass the bucket name to the Lambda environment
       },
       bundling: {
         nodeModules: ["@prisma/client", "prisma"],
@@ -69,20 +63,29 @@ export class MyLambdaStack extends cdk.Stack {
           },
         },
       },
-      // vpc: vpc,
-      // // Specify subnets and security groups if necessary
-      // vpcSubnets: {
-      //   // Adjust subnetType as necessary, e.g., PRIVATE, PUBLIC, or ISOLATED
-      //   subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      // },
-      // securityGroups: [
-      //   // Reference or create a security group
-      //   ec2.SecurityGroup.fromSecurityGroupId(
-      //     this,
-      //     "LambdaSG",
-      //     "subnet-0afe8a904cf219749"
-      //   ),
-      // ],
+      vpc: vpc,
+      // Specify subnets and security groups if necessary
+      vpcSubnets: {
+        // Adjust subnetType as necessary, e.g., PRIVATE, PUBLIC, or ISOLATED
+        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+      securityGroups: [
+        // Reference or create a security group
+        ec2.SecurityGroup.fromSecurityGroupId(
+          this,
+          "LambdaSG",
+          "sg-0123456789abcdef0"
+        ),
+      ],
+    });
+
+    // Grant the Lambda function permissions to read from the S3 bucket
+    bucket.grantRead(new cdk.aws_iam.AccountRootPrincipal());
+
+    // Deploy files from the src folder to the S3 bucket
+    new s3deploy.BucketDeployment(this, "DeploySrcFiles", {
+      sources: [s3deploy.Source.asset(path.join(__dirname, "..", "src"))],
+      destinationBucket: bucket,
     });
   }
 }

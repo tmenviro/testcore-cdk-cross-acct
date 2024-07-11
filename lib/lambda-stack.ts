@@ -2,6 +2,7 @@ import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 // import { Function, InlineCode, Runtime, Code } from "aws-cdk-lib/aws-lambda";
 import * as s3 from "aws-cdk-lib/aws-s3";
+import * as kms from "aws-cdk-lib/aws-kms";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import * as path from "path";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
@@ -15,9 +16,9 @@ export class MyLambdaStack extends cdk.Stack {
   ) {
     super(scope, id, props);
 
-    // const vpc = ec2.Vpc.fromLookup(this, "VPC", {
-    //   vpcId: "vpc-067981a7410563005",
-    // });
+    const vpc = ec2.Vpc.fromLookup(this, "VPC", {
+      vpcId: "vpc-067981a7410563005",
+    });
 
     // const bucket = s3.Bucket.fromBucketName(
     //   this,
@@ -25,6 +26,20 @@ export class MyLambdaStack extends cdk.Stack {
     //   "linuxdna-dev-infra"
     // );
     // const s3Key = "lambda.zip";
+
+    // Create a KMS key
+    const kmsKey = new kms.Key(this, "MyKey", {
+      enableKeyRotation: true,
+    });
+
+    // Create an S3 bucket with the KMS key for encryption
+    const bucket = new s3.Bucket(this, "MyBucket", {
+      bucketName: `my-bucket-${stageName.toLowerCase()}`, // Ensure bucket name is unique
+      encryption: s3.BucketEncryption.KMS,
+      encryptionKey: kmsKey,
+      removalPolicy: cdk.RemovalPolicy.DESTROY, // Change as necessary
+      autoDeleteObjects: true, // Change as necessary
+    });
 
     new NodejsFunction(this, "LambdaFunction", {
       runtime: cdk.aws_lambda.Runtime.NODEJS_18_X,

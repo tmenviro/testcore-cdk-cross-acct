@@ -87,5 +87,18 @@ export class MyLambdaStack extends cdk.Stack {
       sources: [s3deploy.Source.asset(path.join(__dirname, "..", "src"))],
       destinationBucket: bucket,
     });
+
+    // Reference the existing S3 bucket
+    const existingBucket = s3.Bucket.fromBucketName(
+      this,
+      "ExistingBucket",
+      "envro-stuffs"
+    );
+
+    // Deploy files from the src folder to the existing S3 bucket
+    new s3deploy.BucketDeployment(this, "DeploySrcFilesToExistingBucket", {
+      sources: [s3deploy.Source.asset(path.join(__dirname, "..", "src"))],
+      destinationBucket: existingBucket,
+    });
   }
 }
